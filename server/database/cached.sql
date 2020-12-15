@@ -1,0 +1,9 @@
+CREATE DATABASE IF NOT EXISTS `jmdocuments`;
+
+DROP TABLE IF EXISTS `jmdocuments`.`Cached`;
+CREATE TABLE `jmdocuments`.`Cached` (
+  id INTEGER AUTO_INCREMENT PRIMARY KEY,
+  userID INTEGER,
+  serialNumber VARCHAR(128),
+  createdDateTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;

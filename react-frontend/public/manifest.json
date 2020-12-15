@@ -1,0 +1,8 @@
+{
+  "short_name": "User Template",
+  "name": "Node React User Template",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

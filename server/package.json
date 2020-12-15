@@ -1,0 +1,37 @@
+{
+  "name": "template-with-user",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "dependencies": {
+    "@milescwatson/m": "^1.1.9",
+    "body-parser": "^1.19.0",
+    "compression": "^1.7.4",
+    "crypto-js": "^3.3.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "ftp-srv": "^4.3.4",
+    "morgan": "^1.10.0",
+    "mysql2": "^1.7.0",
+    "passport": "^0.4.1",
+    "passport-google-oauth": "^2.0.0",
+    "passport-local": "^1.0.0",
+    "pbkdf2": "^3.1.1",
+    "session": "^0.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/milescwatson/node-user-template.git"
+  },
+  "author": "Miles Watson",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/milescwatson/node-user-template/issues"
+  },
+  "homepage": "https://github.com/milescwatson/node-user-template#readme"
+}

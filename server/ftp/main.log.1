@@ -1,0 +1,39 @@
+Event before-parameter-build.s3.PutObject: calling handler <function validate_ascii_metadata at 0x7fd5119abe50>
+Event before-parameter-build.s3.PutObject: calling handler <function sse_md5 at 0x7fd5119ab280>
+Event before-parameter-build.s3.PutObject: calling handler <function convert_body_to_file_like_object at 0x7fd5119ac790>
+Event before-parameter-build.s3.PutObject: calling handler <function validate_bucket_name at 0x7fd5119ab1f0>
+Event before-parameter-build.s3.PutObject: calling handler <bound method S3RegionRedirector.redirect_from_cache of <botocore.utils.S3RegionRedirector object at 0x7fd50fc56d00>>
+Event before-parameter-build.s3.PutObject: calling handler <bound method S3ArnParamHandler.handle_arn of <botocore.utils.S3ArnParamHandler object at 0x7fd50fc56dc0>>
+Event before-parameter-build.s3.PutObject: calling handler <function generate_idempotent_uuid at 0x7fd5119ab040>
+Event before-call.s3.PutObject: calling handler <function conditionally_calculate_md5 at 0x7fd511b29160>
+Event before-call.s3.PutObject: calling handler <function add_expect_header at 0x7fd5119ab550>
+Adding expect 100 continue header to request.
+Event before-call.s3.PutObject: calling handler <bound method S3RegionRedirector.set_request_url of <botocore.utils.S3RegionRedirector object at 0x7fd50fc56d00>>
+Event before-call.s3.PutObject: calling handler <function inject_api_version_header_if_needed at 0x7fd5119ac8b0>
+Making request for OperationModel(name=PutObject) with params: {'url_path': '/jmdocuments2/_thumb_%28514%29%2010-4-2020%205%3A25%3A23%2098.jpg', 'query_string': {}, 'method': 'PUT', 'headers': {'x-amz-meta-pageID': '514', 'User-Agent': 'Boto3/1.16.8 Python/3.8.5 Linux/5.4.0-1029-aws Botocore/1.19.8 Resource', 'Content-MD5': 'dowFvipBVpeH25d9vX3nMg==', 'Expect': '100-continue'}, 'body': <_io.BytesIO object at 0x7fd50f877c20>, 'url': 'https://s3.amazonaws.com/jmdocuments2/_thumb_%28514%29%2010-4-2020%205%3A25%3A23%2098.jpg', 'context': {'client_region': 'us-east-1', 'client_config': <botocore.config.Config object at 0x7fd50fd56bb0>, 'has_streaming_input': True, 'auth_type': None, 'signing': {'bucket': 'jmdocuments2'}}}
+Event request-created.s3.PutObject: calling handler <bound method RequestSigner.handler of <botocore.signers.RequestSigner object at 0x7fd50fd56820>>
+Event choose-signer.s3.PutObject: calling handler <bound method ClientCreator._default_s3_presign_to_sigv2 of <botocore.client.ClientCreator object at 0x7fd51019a220>>
+Event choose-signer.s3.PutObject: calling handler <function set_operation_specific_signer at 0x7fd5119a3ee0>
+Event before-sign.s3.PutObject: calling handler <bound method S3EndpointSetter.set_endpoint of <botocore.utils.S3EndpointSetter object at 0x7fd50fc56e50>>
+Checking for DNS compatible bucket for: https://s3.amazonaws.com/jmdocuments2/_thumb_%28514%29%2010-4-2020%205%3A25%3A23%2098.jpg
+URI updated to: https://jmdocuments2.s3.amazonaws.com/_thumb_%28514%29%2010-4-2020%205%3A25%3A23%2098.jpg
+Calculating signature using v4 auth.
+CanonicalRequest:
+PUT
+/_thumb_%28514%29%2010-4-2020%205%3A25%3A23%2098.jpg
+
+content-md5:dowFvipBVpeH25d9vX3nMg==
+host:jmdocuments2.s3.amazonaws.com
+x-amz-content-sha256:UNSIGNED-PAYLOAD
+x-amz-date:20201030T052619Z
+x-amz-meta-pageid:514
+
+content-md5;host;x-amz-content-sha256;x-amz-date;x-amz-meta-pageid
+UNSIGNED-PAYLOAD
+StringToSign:
+AWS4-HMAC-SHA256
+20201030T052619Z
+20201030/us-east-1/s3/aws4_request
+b1e56476131900e57387232ec34bdb4d94c7481540686c5f8d95246e6e61b2d1
+Signature:
+ded76c4e3967cdd5d59b97f87a8812642441e4b9b233b5c9bec9140074564518
