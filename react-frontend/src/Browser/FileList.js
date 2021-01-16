@@ -41,22 +41,36 @@ var Header = function(props){
       mode: 'all'
     })
   }
-
-  if(browserState.mode === 'search'){
-    return(
-      <>
-        <Card.Header><Button onClick={changeModeToAll} variant="link">Back to All Documents</Button><b> Search Results For: <ShowSimpleSearch /></b> </Card.Header>
-      </>
-    )
-  }else if(browserState.mode === 'all'){
-    return(
-      <Card.Header>All Documents</Card.Header>
-    )
-  }else{
-    return(
-      <p>Error: Could not determine Browser view mode.</p>
-    )
+  var DispMode = function(){
+    if(browserState.mode === 'search'){
+      return(
+        <>
+          <Card.Header><Button onClick={changeModeToAll} variant="link">Back to All Documents</Button><b> Search Results For: <ShowSimpleSearch /></b> </Card.Header>
+        </>
+      )
+    }else if(browserState.mode === 'all'){
+      return(
+        <Card.Header>All Documents</Card.Header>
+      )
+    }else{
+      return(
+        <p>Error: Could not determine Browser view mode.</p>
+      )
+    }
   }
+
+  // var SelectionStatus = function(){
+  //   return(
+  //     {browserState.selectedItems[0] === null ? '' : 'y'}
+  //   )
+  // }
+
+  return(
+    <React.Fragment>
+      <DispMode />
+    </React.Fragment>
+  )
+
 }
 
 var handlePageChange = function(pageNumber, browserState, setBrowserState) {
@@ -67,44 +81,37 @@ var handlePageChange = function(pageNumber, browserState, setBrowserState) {
 }
 
 var FileList = function(){
+  const { browserState, setBrowserState} = useContext(BrowserContext)
+
   return(
     <React.Fragment>
-      <BrowserContext.Consumer>
-        {(browserStateC)=>{
-          var browserState = browserStateC.browserState;
-          return(
-            <Card>
-              <Header browserState = {browserState} />
-              <Card.Body>
-                <div className="container">
-                  <div className="row">
-                    <div className="col-8">
-                      <h1>FileList Component</h1>
-                        <Page
-                        />
-
-                        <Pagination
-                          activePage = {browserState.selectedPage}
-                          itemsCountPerPage = {pageDivisor}
-                          totalItemsCount = {(browserState.numberOfDocuments === undefined) ? 1 :  browserState.numberOfDocuments}
-                          pageRangeDisplayed = {5}
-                          onChange = {(pageNumber)=>{handlePageChange(pageNumber, browserStateC.browserState, browserStateC.setBrowserState)}}
-                          itemClass = "page-item"
-                          linkClass = "page-link"
-                        />
-
-                        <p>There are {browserState.numberOfDocuments} documents</p>
-                    </div>
-                    <div className="col-4">
-                      <SidebarPreview />
-                    </div>
-                  </div>
-                </div>
-              </Card.Body>
-            </Card>
-          )
-        }}
-      </BrowserContext.Consumer>
+      <Card>
+        <Header browserState = {browserState} />
+        <Card.Body>
+          <div className="container-fluid">
+            <div className="row">
+              <div className="col-10">
+                <h1>Recent Files</h1>
+                  <Page
+                  />
+                  <Pagination
+                    activePage = {browserState.selectedPage}
+                    itemsCountPerPage = {pageDivisor}
+                    totalItemsCount = {(browserState.numberOfDocuments === undefined) ? 1 :  browserState.numberOfDocuments}
+                    pageRangeDisplayed = {5}
+                    onChange = {(pageNumber)=>{handlePageChange(pageNumber, browserState, setBrowserState)}}
+                    itemClass = "page-item"
+                    linkClass = "page-link"
+                  />
+                <p>There are {browserState.numberOfDocuments} documents.</p>
+              </div>
+              <div className="col-2">
+                <SidebarPreview />
+              </div>
+            </div>
+          </div>
+        </Card.Body>
+      </Card>
     </React.Fragment>
   )
 }

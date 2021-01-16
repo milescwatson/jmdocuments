@@ -218,19 +218,18 @@ class UserState extends React.Component{
   render(){
     return(
       <React.Fragment>
-        <Router>
-          <this.NavBar />
-            <Route exact path="/" component={App} />
-            <Route exact path="/about" component={About} />
-            <Route exact path="/signup"
-              render = {(props) => <SignUp {...props} /> }
-            />
-          <Route exact path="/search"
-              component = {Browser}
-            />
-            <Route exact path="/account" component={Account} />
-
-        </Router>
+          <Router>
+            <this.NavBar />
+              <Route exact path="/" component={App} />
+              <Route exact path="/about" component={About} />
+              <Route exact path="/signup"
+                render = {(props) => <SignUp {...props} /> }
+              />
+              <Route exact path="/search"
+                component = {Browser}
+              />
+              <Route exact path="/account" component={Account} />
+          </Router>
       </React.Fragment>
     )
   }

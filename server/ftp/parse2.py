@@ -1,12 +1,7 @@
 # This is run periodically to gather and parse certification documents
-
-# First, gather CD documents in the cd-upload-target directory
-# Foreach document, create a documentObject
-
 # test pages: 10-30
 # t3.small ocr seconds per page: 3.35
 #  t3.nano ocr seconds per page: 3.5
-
 import os
 import io
 import time
@@ -19,10 +14,16 @@ from PIL import Image
 import pytesseract
 import random
 import boto3
-import types
-import pickle
+# import types
+# import pickle
 import tempfile
 import mariadb
+logName = 'main.log'
+logging.basicConfig(filename=logName, level=logging.DEBUG,
+                    format='%(asctime)s:%(levelname)s:%(message)s')
+log = logging.getLogger()
+handler = RotatingFileHandler(logName, maxBytes=4096, backupCount=1)
+log.addHandler(handler)
 
 def getConnection():
     try:
@@ -37,40 +38,6 @@ def getConnection():
     except mariadb.Error as e:
         print(f"Error connecting to MariaDB Platform: {e}")
         return None
-
-logName = 'main.log'
-logging.basicConfig(filename=logName, level=logging.DEBUG,
-                    format='%(asctime)s:%(levelname)s:%(message)s')
-
-log = logging.getLogger()
-handler = RotatingFileHandler(logName, maxBytes=4096, backupCount=1)
-log.addHandler(handler)
-
-def putItemsOld(itemDict):
-    dynamodb = boto3.resource('dynamodb',region_name='us-east-1')
-    table = dynamodb.Table('jmdocuments')
-    def _flush(self):
-        items_to_send = self._items_buffer[:self._flush_amount]
-        self._items_buffer = self._items_buffer[self._flush_amount:]
-        self._response = self._client.batch_write_item(
-            RequestItems={self._table_name: items_to_send})
-        unprocessed_items = self._response['UnprocessedItems']
-
-        if unprocessed_items and unprocessed_items[self._table_name]:
-            # Any unprocessed_items are immediately added to the
-            # next batch we send.
-            self._items_buffer.extend(unprocessed_items[self._table_name])
-        else:
-            self._items_buffer = []
-        # logging.debug("Batch write sent %s, unprocessed: %s",
-                     # len(items_to_send), len(self._items_buffer))
-
-    try:
-        with table.batch_writer() as batch:
-                # batch._flush=types.MethodType(_flush, batch)
-                batch.put_item(Item=itemDict)
-    except Exception as e:
-        logging.error('Could not insert table, error: ', e)
 
 class PageObject(object):
     def __init__(self, pdf, image, pageID):
@@ -97,6 +64,9 @@ class DocumentObj(object):
         self.uploadMetadataSuccess = False
         self.uploadSuccess = False
 
+    # def __exit__(self):
+        # self.originalDocumentOpen.close()
+
     def putItems(self, connection, itemDict):
         try:
             cur = connection.cursor()
@@ -111,13 +81,11 @@ class DocumentObj(object):
             print(f"Last Inserted ID: {cur.lastrowid}")
             connection.close()
 
-    def __exit__(self):
-        self.originalDocumentOpen.close()
-
     def openDocument(self):
-        self.originalDocumentOpen = open('cd-upload-target/'+self.documentName, mode="rb")
+        # self.originalDocumentOpen = open('cd-upload-target/'+self.documentName, mode="rb")
         print('originalDocumentOpen = ', self.originalDocumentOpen);
-        self.fileReader = pdf.PdfFileReader(self.originalDocumentOpen)
+        # self.fileReader = pdf.PdfFileReader(self.originalDocumentOpen)
+        self.fileReader = pdf.PdfFileReader('cd-upload-target/'+self.documentName)
 
     def generatePageObjects(self):
         # Generate images
@@ -168,62 +136,67 @@ class DocumentObj(object):
             logging.error("Could not generate unstructuredOCR, error: ", e)
 
     def uploadS3AndMetadata(self):
+        print('uploading s3 + metadata')
+        s3 = boto3.resource('s3')
+        bucket = s3.Bucket('jmdocuments2')
+        gmt = time.gmtime(time.time())
+        hash = str(gmt.tm_mon)+'-'+str(gmt.tm_wday)+'-'+str(gmt.tm_year)+' '+ str(gmt.tm_hour)+':'+str(gmt.tm_min)+':'+str(gmt.tm_sec)+''+' '+str(int(round(random.random()*100,0)))
+
+        def uploadS3():
+            anyPageFailed = False
+            for page in self.pageObjects:
+                if(page.uploadSuccess != True):
+                    try:
+                        print('Uploading thumbnail and PDF To S3 for page ', page.pageID)
+                        s3Key = '('+str(page.pageID)+') ' + str(hash)+'.pdf'
+                        s3ThumbKey = '_thumb_('+str(page.pageID)+') ' + str(hash)+'.jpg'
+                        asciOCR = ''.join(str(ord(c)) for c in page.ocrUnstructured)
+                        s3UploadRes = ((bucket.put_object(Key=s3Key, Body=page.pdf.getvalue(), Metadata={'pageID':str(page.pageID), 'PossibleAttributes': "{}" })))
+                        s3ThumbnailUploadRes = ((bucket.put_object(Key=s3ThumbKey, Body=page.thumb.getvalue(), Metadata={'pageID':str(page.pageID) })))
+                        page.s3Key = s3UploadRes.key
+                        page.s3ThumbnailKey = s3ThumbnailUploadRes.key
+                        page.uploadSuccess = True
+                    except Exception as e:
+                        anyPageFailed = True
+                        print('could not upload individual pageID ', page.pageID)
+                        logging.error('could not upload individual pageID ', page.pageID)
+            return (not anyPageFailed)
+
+        def uploadMetadata():
+            anyPageFailed = False
+            connection = getConnection()
+            for page in self.pageObjects:
+                if(page.uploadMetadataSuccess != True):
+                    print('uploadingMetadata for page', page.pageID)
+                    try:
+                        self.putItems(connection, {"documentHash": hash, "pageID": page.pageID, "s3Key": page.s3Key, "s3ThumbnailKey": page.s3ThumbnailKey, "unstructuredOCR":page.ocrUnstructured, "originalFileName": self.documentName})
+                        page.uploadMetadataSuccess = True
+                    except Exception as e:
+                        anyPageFailed = True
+                        print('page ', page.pageID, 'failed to upload metadata')
+                        logging.error('could not upload metadata, error: ', e)
+            return (not anyPageFailed)
+
+
         try:
-            print('uploading s3 + metadata')
-            s3 = boto3.resource('s3')
-            bucket = s3.Bucket('jmdocuments2')
-            gmt = time.gmtime(time.time())
-            hash = str(gmt.tm_mon)+'-'+str(gmt.tm_wday)+'-'+str(gmt.tm_year)+' '+ str(gmt.tm_hour)+':'+str(gmt.tm_min)+':'+str(gmt.tm_sec)+''+' '+str(int(round(random.random()*100,0)))
-
-            def uploadS3():
-                anyPageFailed = False
-                for page in self.pageObjects:
-                    if(page.uploadSuccess != True):
-                        try:
-                            print('Uploading thumbnail and PDF To S3 for page ', page.pageID)
-                            s3Key = '('+str(page.pageID)+') ' + str(hash)+'.pdf'
-                            s3ThumbKey = '_thumb_('+str(page.pageID)+') ' + str(hash)+'.jpg'
-                            asciOCR = ''.join(str(ord(c)) for c in page.ocrUnstructured)
-                            s3UploadRes = ((bucket.put_object(Key=s3Key, Body=page.pdf.getvalue(), Metadata={'pageID':str(page.pageID), 'PossibleAttributes': "{}" })))
-                            s3ThumbnailUploadRes = ((bucket.put_object(Key=s3ThumbKey, Body=page.thumb.getvalue(), Metadata={'pageID':str(page.pageID) })))
-                            page.s3Key = s3UploadRes.key
-                            page.s3ThumbnailKey = s3ThumbnailUploadRes.key
-                            page.uploadSuccess = True
-                        except Exception as e:
-                            anyPageFailed = True
-                            print('could not upload individual pageID ', page.pageID)
-                            logging.error('could not upload individual pageID ', page.pageID)
-                return (not anyPageFailed)
-
             self.uploadSuccess = uploadS3()
-            if(not self.uploadSuccess):
+            s3Retry = 0
+            while (s3Retry <= 3 and (not self.uploadSuccess)):
+                self.uploadSuccess = uploadS3()
+                s3Retry+=1
                 time.sleep(4)
-                retryRes = uploadS3()
-                if(not retryRes):
-                    logging.error('uploadS3AndMetadata S3 upload Error, key = ', hash, 'retry result = ', retryRes)
+                # logging.error('uploadS3AndMetadata S3 upload Error, key = ', hash, 'retry result = ', retryRes)
+            if(self.uploadSuccess):
+                self.uploadMetadataSuccess = uploadMetadata()
+            else:
+                print('Not inserting pages to database, because S3 upload failed')
 
-            def uploadMetadata():
-                anyPageFailed = False
-                connection = getConnection()
-                for page in self.pageObjects:
-                    if(page.uploadMetadataSuccess != True):
-                        print('uploadingMetadata for page', page.pageID)
-                        try:
-                            self.putItems(connection, {"documentHash": hash, "pageID": page.pageID, "s3Key": page.s3Key, "s3ThumbnailKey": page.s3ThumbnailKey, "unstructuredOCR":page.ocrUnstructured, "originalFileName": self.documentName})
-                            page.uploadMetadataSuccess = True
-                        except Exception as e:
-                            anyPageFailed = True
-                            print('page ', page.pageID, 'failed')
-                            logging.error('could not upload metadata, error: ', e)
-                return (not anyPageFailed)
-
-            self.uploadMetadataSuccess = uploadMetadata()
-            if(not self.uploadMetadataSuccess):
-                time.sleep(4)
-                retryRes = uploadMetadata()
-                print('error uploading metadata, retry result = ', retryRes)
-                if(not retryRes):
-                    logging.error('uploadS3AndMetadata Metadata upload Error key = ', hash)
+            # if(not self.uploadMetadataSuccess):
+                # time.sleep(4)
+                # retryRes = uploadMetadata()
+                # print('error uploading metadata, retry result = ', retryRes)
+                # if(not retryRes):
+                    # logging.error('uploadS3AndMetadata Metadata upload Error key = ', hash)
 
         except Exception as e:
             logging.error('uploadS3AndMetadata Error')
@@ -249,9 +222,6 @@ class DocumentObj(object):
         self.uploadS3AndMetadata()
         self.printStatus()
         self.deleteDocument()
-
-    def fileProcessStatus(self):
-        pass
 
 def gatherDocuments():
     certificationDocumentItr = os.scandir(Path('cd-upload-target'))

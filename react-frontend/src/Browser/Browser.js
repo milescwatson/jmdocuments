@@ -10,17 +10,19 @@ import './browser.css';
 var dataModel = require('./dataModel');
 
 function Browser(){
-
   const [browserState, setBrowserState] = useState({
     simpleSearch: '',
     mode: 'all', //all or search
-    numberOfDocuments: 500,
-    selectedPage: 1
+    numberOfDocuments: 1,
+    selectedItems: [],
+    selectedPage: 1,
+    multiSelect: false
   });
 
   const value = {browserState, setBrowserState}
 
   function getDocumentCount(){
+    console.log('getDocumentCount');
     dataModel.getDocumentCount((error, result)=>{
       if(!error){
         setBrowserState({
@@ -34,25 +36,28 @@ function Browser(){
 
   useEffect(getDocumentCount, [])
 
-  var ConsumerExample = function(){
-    const browserStateC = useContext(BrowserContext);
-    const browserState = browserStateC.browserState;
-
-    console.log('browserState (ConsumerExample) = ', browserState);
-    return(
-      <React.Fragment>
-        <h3>Consumer Example</h3>
-        <p>simpleSearch: {browserState.simpleSearch}</p>
-      </React.Fragment>
-    )
-  }
+  // var ConsumerExample = function(){
+  //   const browserStateC = useContext(BrowserContext);
+  //   const browserState = browserStateC.browserState;
+  //
+  //   return(
+  //     <React.Fragment>
+  //       <h3>Consumer Example</h3>
+  //       <p>simpleSearch: {browserState.simpleSearch}</p>
+  //     </React.Fragment>
+  //   )
+  // }
+  // var handleToggleMultiSelect = function(event){
+  //   console.log('triggered', event.target.value);
+  // }
 
   return(
     <React.Fragment>
       <BrowserContext.Provider value={value}>
-        <ConsumerExample />
-        <Query />
-        <FileList />
+        <div>
+          <Query />
+          <FileList />
+        </div>
       </BrowserContext.Provider>
     </React.Fragment>
   )

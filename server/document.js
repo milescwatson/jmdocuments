@@ -22,8 +22,9 @@ exports.getDocumentCount = function(request, response){
   getDocumentCountPrivate((error, result)=>{
     obj.numberOfDocuments = result[0]['COUNT(id)'];
     obj.error = error;
+    console.log('docCount sending ', obj);
+    response.send(JSON.stringify(obj));
   })
-  response.send(JSON.stringify(obj))
 }
 
 exports.getDocumentsByPage = function(request, response){
@@ -92,9 +93,7 @@ exports.getDocumentsByPage = function(request, response){
 
         try {
           var newResultLowerLimit = parseInt(JSON.parse(JSON.stringify(result[0]))[0]['idOfLowerPosition']);
-          console.log('newResultLowerLimit: ', newResultLowerLimit);
-          console.log('toSend: ', toSend);
-          
+
           if(newResultLowerLimit === null){
             toSend.error = 'page-nonexist';
           }else{

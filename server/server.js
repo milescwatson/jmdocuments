@@ -59,6 +59,8 @@ app.get('/get-user-object', user.getUserObject);
 
 app.get('/get-documents-by-page/:pageNumber', document.getDocumentsByPage);
 
+app.get('/get-document-count', document.getDocumentCount);
+
 app.get('/health', function(request, response, next) {
 	  response.send('{"status": "healthy"}');
 });
